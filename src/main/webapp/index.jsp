@@ -1,71 +1,74 @@
-<%@page import="java.util.Calendar"
-import="java.text.SimpleDateFormat"
-import="javax.management.MBeanServer"
-import="javax.management.ObjectName"
-import="javax.naming.InitialContext"
-import="javax.servlet.ServletException"
-import="javax.servlet.http.HttpServlet"
-import="javax.servlet.http.HttpServletRequest"
-import="javax.servlet.http.HttpServletResponse"
-import="java.net.InetAddress"%>
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%-- 
+    Document   : index
+    Created on : Dec 21, 2015, 4:33:25 PM
+    Author     : bruno
+--%>
+<%@page import="java.util.Iterator"%>
+<%@page import="java.util.Set"%>
+<%@page import="weblogic.management.runtime.ServerRuntimeMBean"%>
+<%@page import="java.net.UnknownHostException"%>
+<%@page import="java.net.InetAddress"%>
+<%@page import="weblogic.management.*"%>
+
+<%!public static String getIpAddOfCurrSrv() {
+        ServerRuntimeMBean serverRuntime = null;
+        Set mbeanSet = null;
+        Iterator mbeanIterator = null;
+        String ipAddress = "";
+        String adminServerUrl = "t3://localhost:7001";
+        try {
+            MBeanHome mBeanHome = null;
+            mBeanHome = Helper.getAdminMBeanHome("weblogic", "welcome1", adminServerUrl);
+            mbeanSet = mBeanHome.getMBeansByType("ServerRuntime");
+            if (mbeanSet != null) {
+                mbeanIterator = mbeanSet.iterator();
+                while (mbeanIterator.hasNext()) {
+                    serverRuntime = (ServerRuntimeMBean) mbeanIterator.next();
+                    if (serverRuntime != null) {
+                        ipAddress = serverRuntime.getURL("HTTP");
+                        return ipAddress;
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return ipAddress;
+    }
+%>
+
+<%
+    String hostname, serverAddress;
+    hostname = "error";
+    serverAddress = "error";
+    try {
+        InetAddress inetAddress;
+        inetAddress = InetAddress.getLocalHost();
+        hostname = inetAddress.getHostName();
+        serverAddress = inetAddress.toString();
+    } catch (UnknownHostException e) {
+        e.printStackTrace();
+    }
+%>
+
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
-<body>
-	<h1>WebLogic Operator Demo App - MBean properties:</h1><br>
-	<%
-		String jdbcDataSourceName = request.getParameter("dsname");
-		StringBuffer message = new StringBuffer();
-		message.append("<b>Server time:</b> " + new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
-		message.append("<br>");
-		message.append("<b>Hostname:</b> " + InetAddress.getLocalHost().getHostName());
-		message.append("<br>");
-		message.append("<h2>Datasource properties</h2> ");
-		message.append("<p>");
-		if (jdbcDataSourceName == null || jdbcDataSourceName.length() == 0) {
-			message.append("<font color=\"red\">No datasource name provided.</font><br>");
-			message.append("<font color=\"red\">Append ?dsname=YOUR_DATA_SOURCE_NAME to the URL.</font>");
-			message.append("</p>");
-		} else {
-			message.append("<b>Datasource name:</b> " + jdbcDataSourceName);
-			message.append("<br>");
-			try {
-				InitialContext ctx = new InitialContext();
-				MBeanServer connection = (MBeanServer) ctx.lookup("java:comp/env/jmx/runtime");
-
-				ObjectName jdbcSystemResource = new ObjectName(
-						"com.bea:Name=" + jdbcDataSourceName + ",Type=JDBCSystemResource");
-				ObjectName jdbcDataSourceBean = (ObjectName) connection.getAttribute(jdbcSystemResource,
-						"JDBCResource");
-				ObjectName jdbcDriverParams = (ObjectName) connection.getAttribute(jdbcDataSourceBean,
-						"JDBCDriverParams");
-
-				String URL = (String) connection.getAttribute(jdbcDriverParams, "Url");
-
-				System.out.println("DB URL = " + URL);
-
-				ObjectName dsProperties = (ObjectName) connection.getAttribute(jdbcDriverParams, "Properties");
-
-				ObjectName[] jdbcPropertyBeans = (ObjectName[]) connection.getAttribute(dsProperties, "Properties");
-				for (int j = 0; j < jdbcPropertyBeans.length; j++) {
-					ObjectName jdbcPropertyBean = null;
-					jdbcPropertyBean = jdbcPropertyBeans[j];
-					String jdbcPropertyName = (String) connection.getAttribute(jdbcPropertyBean, "Name");
-					String jdbcPropertyValue = (String) connection.getAttribute(jdbcPropertyBean, "Value");
-					if (jdbcPropertyName.equals("user")) {
-						message.append("<b>Database User:</b> " + jdbcPropertyValue);
-						message.append("<br>");
-					}
-				}
-				message.append("<b>Database URL:</b> " + URL);
-				message.append("</p>");
-			} catch (Exception e) {
-				e.printStackTrace();
-				message.append("<b>Error:</b> " + e.getClass().getName() + " - " + e.getLocalizedMessage());
-			}
-		}
-	%>
-	<%=message%>
-</body>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>JSP Page</title>
+    </head>
+    <body>
+        <h1>WebLogic Server on Docker - Request Information</h1>
+        <ul>
+            <li>getVirtualServerName(): <%= request.getServletContext().getVirtualServerName() %></li>
+            <li>InetAddress.hostname: <%=hostname%></li>
+            <li>InetAddress.serverAddress: <%=serverAddress%></li>
+            <li>getLocalAddr(): <%=request.getLocalAddr()%></li>
+            <li>getLocalName(): <%=request.getLocalName()%></li>
+            <li>getLocalPort(): <%=request.getLocalPort()%></li>
+            <li>getServerName(): <%=request.getServerName()%></li>
+            <li>WLS Server Name: <%=System.getProperty("weblogic.Name")%></li>
+            <li>getIpAddOfCurrSrv(): <%=getIpAddOfCurrSrv()%> </li>
+        </ul>
+    </body>
 </html>
