@@ -58,7 +58,7 @@
         <title>JSP Page</title>
     </head>
     <body>
-        <h1>WebLogic Server 2 on Docker - Request Information - STEPHEN</h1>
+        <h1>WebLogic Server 2921301 on Docker - Request Information - STEPHEN</h1>
         <ul>
             <li>getVirtualServerName(): <%= request.getServletContext().getVirtualServerName() %></li>
             <li>InetAddress.hostname: <%=hostname%></li>
