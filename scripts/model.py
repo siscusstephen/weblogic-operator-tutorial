@@ -11,7 +11,7 @@ admin_port               = 7001
 t3_channel_port          = 30012
 t3_public_address        = "kubernetes"
 cluster_name             = "cluster-1"
-number_of_ms             = 5
+number_of_ms             = 8
 managed_server_name_base = "managed-server"
 managed_server_port      = 8001
 
